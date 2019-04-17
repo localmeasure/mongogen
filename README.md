@@ -4,9 +4,8 @@ A codegen, generate any possible IXSCAN queries in golang, group to services
 
 first draft
 
-* get every collection names
-* get every indexes
-* fetch record with index key(s) exist to find its data type to map to golang
+* get every indexes in database
+* fetch record with index key(s) to find its data type (mapping to golang)
 * **generate golang code** to do safe querying
 * compound index will have n (keys) of methods (in keys order)
 

@@ -2,6 +2,7 @@ package mongogen
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -10,11 +11,12 @@ import (
 )
 
 type Analyzer struct {
-	sess *mgo.Session
+	sess   *mgo.Session
+	dbName string
 }
 
-func NewAnalyzer(sess *mgo.Session) *Analyzer {
-	return &Analyzer{sess: sess}
+func NewAnalyzer(sess *mgo.Session, dbName string) *Analyzer {
+	return &Analyzer{sess: sess, dbName: dbName}
 }
 
 type Pkg struct {
@@ -42,18 +44,22 @@ type Argument struct {
 	ArgType   string `json:"argType"`
 }
 
+func (a *Analyzer) DB() *mgo.Database {
+	return a.sess.Copy().DB(a.dbName)
+}
+
 func (a *Analyzer) Analyze() (Pkg, error) {
-	colNames, err := a.sess.Copy().DB("localmeasure").CollectionNames()
+	colNames, err := a.DB().CollectionNames()
 	if err != nil {
 		return Pkg{}, err
 	}
 
-	pkgg := Pkg{}
+	pkg := Pkg{}
 	//var importsSet = make(map[string]struct{})
 	for _, colName := range colNames {
-		indexes, err := a.sess.DB("localmeasure").C(colName).Indexes()
+		indexes, err := a.DB().C(colName).Indexes()
 		if err != nil {
-			return pkgg, err
+			return pkg, err
 		}
 		camelColName := toCamelCase(colName, true)
 		service := Typ{
@@ -75,6 +81,12 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 				}
 				for lvl := 0; lvl <= i; lvl++ {
 					queryName := idx.Key[lvl]
+					if strings.Index(queryName, "$text:") == 0 {
+						queryName = queryName[6:]
+					}
+					if strings.Index(queryName, "$2d:") == 0 {
+						queryName = queryName[4:]
+					}
 					if queryName[0] == '-' {
 						queryName = queryName[1:]
 					}
@@ -84,7 +96,7 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 					}
 					if _, ok := typSet[arg.ArgName]; !ok {
 						var unknown bson.M
-						a.sess.DB("localmeasure").C(service.Collection).Find(bson.M{arg.QueryName: bson.M{"$exists": true}}).One(&unknown)
+						a.DB().C(service.Collection).Find(bson.M{arg.QueryName: bson.M{"$exists": true}}).One(&unknown)
 
 						switch t := unknown[arg.QueryName].(type) {
 						case nil:
@@ -114,22 +126,23 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 			}
 		}
 		service.Methods = methods
-		pkgg.Types = append(pkgg.Types, service)
+		pkg.Types = append(pkg.Types, service)
 	}
 
-	if len(pkgg.Types) > 0 {
+	if len(pkg.Types) > 0 {
 		// for now
-		pkgg.Imports = append([]string{
+		pkg.Imports = append([]string{
 			"context",
 			"time",
 			"go.mongodb.org/mongo-driver/bson",
+			"go.mongodb.org/mongo-driver/bson/primitive",
 			"go.mongodb.org/mongo-driver/mongo",
 			"go.mongodb.org/mongo-driver/mongo/options",
-		}, pkgg.Imports...)
-		pkgg.Database = "localmeasure"
+		}, pkg.Imports...)
+		pkg.Database = a.dbName
 	}
 
-	return pkgg, nil
+	return pkg, nil
 }
 
 func toCamelCase(str string, cap bool) string {

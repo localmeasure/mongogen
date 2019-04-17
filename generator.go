@@ -3,10 +3,36 @@ package mongogen
 import (
 	"bytes"
 	"fmt"
-	"go/format"
-	"log"
 	"strings"
 )
+
+var goKeywords = map[string]struct{}{
+	"break":       struct{}{},
+	"default":     struct{}{},
+	"func":        struct{}{},
+	"interface":   struct{}{},
+	"select":      struct{}{},
+	"case":        struct{}{},
+	"defer":       struct{}{},
+	"go":          struct{}{},
+	"map":         struct{}{},
+	"struct":      struct{}{},
+	"chan":        struct{}{},
+	"else":        struct{}{},
+	"goto":        struct{}{},
+	"package":     struct{}{},
+	"switch":      struct{}{},
+	"const":       struct{}{},
+	"fallthrough": struct{}{},
+	"if":          struct{}{},
+	"range":       struct{}{},
+	"type":        struct{}{},
+	"continue":    struct{}{},
+	"for":         struct{}{},
+	"import":      struct{}{},
+	"return":      struct{}{},
+	"var":         struct{}{},
+}
 
 type Generator struct {
 	PackageName string
@@ -87,7 +113,7 @@ func (g *Generator) Generate(pkg *Pkg) {
 func printMethodArgs(args []Argument) string {
 	out := ""
 	for _, arg := range args {
-		out += arg.ArgName + " " + arg.ArgType + ", "
+		out += escapeGoKeyword(arg.ArgName) + " " + arg.ArgType + ", "
 	}
 	return out[:len(out)-2]
 }
@@ -95,15 +121,18 @@ func printMethodArgs(args []Argument) string {
 func printMethodReturn(args []Argument) string {
 	out := ""
 	for _, arg := range args {
-		out += "{Key: \"" + arg.QueryName + "\", Value: " + arg.ArgName + "}, "
+		out += "{Key: \"" + arg.QueryName + "\", Value: " + escapeGoKeyword(arg.ArgName) + "}, "
 	}
 	return "return bson.D{" + out[:len(out)-2] + "}"
 }
 
 func (g *Generator) Output() []byte {
-	src, err := format.Source(g.buf.Bytes())
-	if err != nil {
-		log.Fatalf("Failed to format generated source code: %s\n%s", err, g.buf.String())
+	return g.buf.Bytes()
+}
+
+func escapeGoKeyword(key string) string {
+	if _, matched := goKeywords[key]; matched {
+		return key + "Arg"
 	}
-	return src
+	return key
 }
