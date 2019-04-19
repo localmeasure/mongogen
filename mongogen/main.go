@@ -14,6 +14,7 @@ var (
 	mongoURI    = flag.String("server", "mongodb://localhost:27017", "mongo server, example: mongodb://localhost:27017")
 	mongoDB     = flag.String("db", "test", "database name, example: test")
 	destination = flag.String("dst", "", "output file; defaults to stdout.")
+	packageName = flag.String("pkg", "services", "package name, example: services")
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 		dst = f
 	}
 
-	gen := mongogen.NewGenerator("services")
+	gen := mongogen.NewGenerator(*packageName)
 	gen.Generate(&pkg)
 
 	if _, err := dst.Write(gen.Output()); err != nil {

@@ -36,6 +36,7 @@ type Typ struct {
 type Method struct {
 	Name string     `json:"name"`
 	Args []Argument `json:"args"`
+	Hint string     `json:"hint"`
 }
 
 type Argument struct {
@@ -55,7 +56,6 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 	}
 
 	pkg := Pkg{}
-	//var importsSet = make(map[string]struct{})
 	for _, colName := range colNames {
 		indexes, err := a.DB().C(colName).Indexes()
 		if err != nil {
@@ -70,58 +70,73 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 		}
 		var methods []Method
 		methodSet := make(map[string]struct{})
-		typSet := make(map[string]string)
+		typSet := make(map[string]Argument)
 		for _, idx := range indexes {
+			var method Method
 			if len(idx.Key) == 1 && idx.Key[0] == "_id" {
-				continue
-			}
-			for i := 0; i < len(idx.Key); i++ {
-				method := Method{
-					Name: service.Singular + "With",
+				method = Method{
+					Hint: idx.Name,
+					Name: service.Singular + "WithID",
+					Args: []Argument{{
+						QueryName: "_id",
+						ArgName:   "id",
+						ArgType:   "primitive.ObjectID",
+					}},
 				}
-				for lvl := 0; lvl <= i; lvl++ {
-					queryName := idx.Key[lvl]
-					if strings.Index(queryName, "$text:") == 0 {
-						queryName = queryName[6:]
-					}
-					if strings.Index(queryName, "$2d:") == 0 {
-						queryName = queryName[4:]
-					}
-					if queryName[0] == '-' {
-						queryName = queryName[1:]
-					}
-					arg := Argument{
-						QueryName: queryName,
-						ArgName:   toCamelCase(queryName, false),
-					}
-					if _, ok := typSet[arg.ArgName]; !ok {
-						var unknown bson.M
-						a.DB().C(service.Collection).Find(bson.M{arg.QueryName: bson.M{"$exists": true}}).One(&unknown)
-
-						switch t := unknown[arg.QueryName].(type) {
-						case nil:
-							arg.ArgType = "interface{}"
-						case bson.ObjectId:
-							arg.ArgType = "primitive.ObjectID"
-						case time.Time:
-							arg.ArgType = "time.Time"
-						case []interface{}:
-							// reformat
-							arg.ArgType = "[]interface{}"
-						default:
-							arg.ArgType = fmt.Sprintf("%T", t)
-						}
-						typSet[arg.ArgName] = arg.ArgType
-					} else {
-						arg.ArgType = typSet[arg.ArgName]
-					}
-					method.Name += toCamelCase(arg.ArgName, true)
-					method.Args = append(method.Args, arg)
-				}
-
 				if _, ok := methodSet[method.Name]; !ok {
 					methods = append(methods, method)
 					methodSet[method.Name] = struct{}{}
+				}
+			} else {
+				var query bson.D
+				for i := 0; i < len(idx.Key); i++ {
+					if strings.Index(idx.Key[i], "$text:") == 0 {
+						idx.Key[i] = idx.Key[i][6:]
+					}
+					if strings.Index(idx.Key[i], "$2d:") == 0 {
+						idx.Key[i] = idx.Key[i][4:]
+					}
+					if idx.Key[i][0] == '-' {
+						idx.Key[i] = idx.Key[i][1:]
+					}
+					query = append(query, bson.DocElem{Name: idx.Key[i], Value: bson.M{"$exists": true}})
+				}
+				if len(query) > 0 {
+					var unknown bson.M
+					a.DB().C(service.Collection).Find(query).Hint(idx.Name).One(&unknown)
+					for i := 0; i < len(idx.Key); i++ {
+						argType := "interface{}"
+						switch t := unknown[idx.Key[i]].(type) {
+						case nil:
+							argType = "interface{}"
+						case bson.ObjectId:
+							argType = "primitive.ObjectID"
+						case time.Time:
+							argType = "time.Time"
+						case []interface{}:
+							argType = "[]interface{}"
+						default:
+							argType = fmt.Sprintf("%T", t)
+						}
+						typSet[idx.Key[i]] = Argument{
+							QueryName: idx.Key[i],
+							ArgName:   escapeGoKeyword(toCamelCase(idx.Key[i], false)),
+							ArgType:   argType,
+						}
+					}
+				}
+				for i := 0; i < len(idx.Key); i++ {
+					method = Method{
+						Hint: idx.Name,
+						Name: service.Singular + "With",
+					}
+					arg := typSet[idx.Key[i]]
+					method.Name += toCamelCase(idx.Key[i], true)
+					method.Args = append(method.Args, arg)
+					if _, ok := methodSet[method.Name]; !ok {
+						methods = append(methods, method)
+						methodSet[method.Name] = struct{}{}
+					}
 				}
 			}
 		}
@@ -162,4 +177,39 @@ func toCamelCase(str string, cap bool) string {
 		pos++
 	}
 	return string(out[:pos])
+}
+
+var goKeywords = map[string]struct{}{
+	"break":       struct{}{},
+	"default":     struct{}{},
+	"func":        struct{}{},
+	"interface":   struct{}{},
+	"select":      struct{}{},
+	"case":        struct{}{},
+	"defer":       struct{}{},
+	"go":          struct{}{},
+	"map":         struct{}{},
+	"struct":      struct{}{},
+	"chan":        struct{}{},
+	"else":        struct{}{},
+	"goto":        struct{}{},
+	"package":     struct{}{},
+	"switch":      struct{}{},
+	"const":       struct{}{},
+	"fallthrough": struct{}{},
+	"if":          struct{}{},
+	"range":       struct{}{},
+	"type":        struct{}{},
+	"continue":    struct{}{},
+	"for":         struct{}{},
+	"import":      struct{}{},
+	"return":      struct{}{},
+	"var":         struct{}{},
+}
+
+func escapeGoKeyword(key string) string {
+	if _, matched := goKeywords[key]; matched {
+		return key + "Arg"
+	}
+	return key
 }

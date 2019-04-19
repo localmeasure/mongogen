@@ -6,34 +6,6 @@ import (
 	"strings"
 )
 
-var goKeywords = map[string]struct{}{
-	"break":       struct{}{},
-	"default":     struct{}{},
-	"func":        struct{}{},
-	"interface":   struct{}{},
-	"select":      struct{}{},
-	"case":        struct{}{},
-	"defer":       struct{}{},
-	"go":          struct{}{},
-	"map":         struct{}{},
-	"struct":      struct{}{},
-	"chan":        struct{}{},
-	"else":        struct{}{},
-	"goto":        struct{}{},
-	"package":     struct{}{},
-	"switch":      struct{}{},
-	"const":       struct{}{},
-	"fallthrough": struct{}{},
-	"if":          struct{}{},
-	"range":       struct{}{},
-	"type":        struct{}{},
-	"continue":    struct{}{},
-	"for":         struct{}{},
-	"import":      struct{}{},
-	"return":      struct{}{},
-	"var":         struct{}{},
-}
-
 type Generator struct {
 	PackageName string
 	buf         bytes.Buffer
@@ -77,6 +49,14 @@ func (g *Generator) Generate(pkg *Pkg) {
 	g.p(")")
 	g.p("")
 
+	g.p("type Filter struct {")
+	g.in()
+	g.p("Filter bson.D")
+	g.p("Hint   string")
+	g.out()
+	g.p("}")
+	g.p("")
+
 	for _, t := range pkg.Types {
 		g.p("type %v struct {", t.Plural)
 		g.in()
@@ -86,24 +66,25 @@ func (g *Generator) Generate(pkg *Pkg) {
 		g.p("")
 
 		for _, m := range t.Methods {
-			g.p("func " + m.Name + "(" + printMethodArgs(m.Args) + ") bson.D {")
+			g.p("func " + m.Name + "(" + printMethodArgs(m.Args) + ") Filter {")
 			g.in()
-			g.p(printMethodReturn(m.Args))
+			g.p(printMethodReturn(m.Args, m.Hint))
 			g.out()
 			g.p("}")
 			g.p("")
 		}
 
-		g.p("func (s *" + t.Plural + ") Find(ctx context.Context, filter bson.D, opts ...*options.FindOptions) (*mongo.Cursor, error) {")
+		g.p("func (s *" + t.Plural + ") Find(ctx context.Context, filter Filter, opts ...*options.FindOptions) (*mongo.Cursor, error) {")
 		g.in()
-		g.p("return s.db.Collection(%q).Find(ctx, filter, opts...)", t.Collection)
+		g.p("opts = append(opts, options.Find().SetHint(filter.Hint))")
+		g.p("return s.db.Collection(%q).Find(ctx, filter.Filter, opts...)", t.Collection)
 		g.out()
 		g.p("}")
 		g.p("")
 
-		g.p("func (s *" + t.Plural + ") FindOne(ctx context.Context, filter bson.D, opts ...*options.FindOneOptions) *mongo.SingleResult {")
+		g.p("func (s *" + t.Plural + ") FindOne(ctx context.Context, filter Filter, hint string, opts ...*options.FindOneOptions) *mongo.SingleResult {")
 		g.in()
-		g.p("return s.db.Collection(%q).FindOne(ctx, filter, opts...)", t.Collection)
+		g.p("return s.db.Collection(%q).FindOne(ctx, filter.Filter, opts...)", t.Collection)
 		g.out()
 		g.p("}")
 		g.p("")
@@ -113,26 +94,19 @@ func (g *Generator) Generate(pkg *Pkg) {
 func printMethodArgs(args []Argument) string {
 	out := ""
 	for _, arg := range args {
-		out += escapeGoKeyword(arg.ArgName) + " " + arg.ArgType + ", "
+		out += arg.ArgName + " " + arg.ArgType + ", "
 	}
 	return out[:len(out)-2]
 }
 
-func printMethodReturn(args []Argument) string {
+func printMethodReturn(args []Argument, hint string) string {
 	out := ""
 	for _, arg := range args {
-		out += "{Key: \"" + arg.QueryName + "\", Value: " + escapeGoKeyword(arg.ArgName) + "}, "
+		out += "{Key: \"" + arg.QueryName + "\", Value: " + arg.ArgName + "}, "
 	}
-	return "return bson.D{" + out[:len(out)-2] + "}"
+	return "return Filter{bson.D{" + out[:len(out)-2] + "}, \"" + hint + "\"}"
 }
 
 func (g *Generator) Output() []byte {
 	return g.buf.Bytes()
-}
-
-func escapeGoKeyword(key string) string {
-	if _, matched := goKeywords[key]; matched {
-		return key + "Arg"
-	}
-	return key
 }
