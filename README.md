@@ -1,16 +1,21 @@
 # mongogen
 
-A codegen, generate any possible IXSCAN queries in golang, group to services
+A codegen, generate mongo query builder in golang base on indices, group in services
 
-first draft
+## install
+```
+go get github.com/roamz/mongogen
+go install github.com/roamz/mongogen/mongogen
+```
 
-* get every indexes in database
-* fetch record with index key(s) to find its data type (mapping to golang)
-* **generate golang code** to do safe querying
-* compound index will have n (keys) of methods (in keys order)
+## generate
+```
+mongogen -server mongodb://localhost:27017 -db localmeasure
+```
 
-benefits
+Output example:
+https://gitlab.com/localmeasure/std/blob/master/services/mongo.go
 
-* no need to do profiling
-* no more query.explain() (generated queries will always be IXSCAN)
-* cover all services, dont have to write custom service again, e.g: https://gitlab.com/localmeasure/std/tree/master/services
+TODO:
+* Remove globalsign/mgo (using this due to some current hard code in [mongo-go-driver](https://github.com/mongodb/mongo-go-driver))
+* Slowlog unoptimized indices (e.g: objectid-date-objectid)
