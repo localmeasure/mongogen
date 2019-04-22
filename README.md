@@ -16,6 +16,6 @@ mongogen -server mongodb://localhost:27017 -db localmeasure
 Output example:
 https://gitlab.com/localmeasure/std/blob/master/services/mongo.go
 
-TODO:
+## todo
 * Remove globalsign/mgo (using this due to some current hard code in [mongo-go-driver](https://github.com/mongodb/mongo-go-driver))
 * Slowlog unoptimized indices (e.g: objectid-date-objectid)
