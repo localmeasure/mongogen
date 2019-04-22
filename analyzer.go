@@ -96,34 +96,28 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 				}
 			} else {
 				a.typesOf(colName, idx)
+				mName := service.Singular + "With"
+				mArgs := []Argument{}
 				for i := 0; i < len(idx.Key); i++ {
+					mName += toCamelCase(idx.Key[i], true)
 					typReg.RLock()
 					argType, ok := typReg.ref[colName+idx.Key[i]]
 					typReg.RUnlock()
 					if !ok {
 						argType = "interface{}"
 					}
-					method = Method{
-						Hint: constant,
-						Name: service.Singular + "With" + toCamelCase(idx.Key[0], true),
-						Args: []Argument{{
-							QueryName: idx.Key[0],
-							ArgName:   escapeGoKeyword(toCamelCase(idx.Key[0], false)),
-							ArgType:   argType,
-						}},
-					}
-					for n := 1; n <= i; n++ {
-						arg := Argument{
-							QueryName: idx.Key[n],
-							ArgName:   escapeGoKeyword(toCamelCase(idx.Key[n], false)),
-							ArgType:   argType,
-						}
-						method.Name += toCamelCase(idx.Key[n], true)
-						method.Args = append(method.Args, arg)
-					}
-					if _, ok := methodSet[method.Name]; !ok {
-						methods = append(methods, method)
-						methodSet[method.Name] = struct{}{}
+					mArgs = append(mArgs, Argument{
+						QueryName: idx.Key[i],
+						ArgName:   escapeGoKeyword(toCamelCase(idx.Key[i], false)),
+						ArgType:   argType,
+					})
+					if _, ok := methodSet[mName]; !ok {
+						methods = append(methods, Method{
+							Name: mName,
+							Args: mArgs,
+							Hint: constant,
+						})
+						methodSet[mName] = struct{}{}
 					}
 				}
 			}
