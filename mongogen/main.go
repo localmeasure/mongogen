@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/roamz/mongogen"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -24,9 +27,13 @@ func main() {
 		log.Println(err)
 		return
 	}
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(*mongoURI))
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	analyzer := mongogen.NewAnalyzer(session, *mongoDB)
-
+	analyzer := mongogen.NewAnalyzer(session, client.Database(*mongoDB), *mongoDB)
 	pkg, err := analyzer.Analyze()
 	if err != nil {
 		log.Println(err)
@@ -48,7 +55,6 @@ func main() {
 
 	gen := mongogen.NewGenerator(*packageName)
 	gen.Generate(&pkg)
-
 	if _, err := dst.Write(gen.Output()); err != nil {
 		log.Fatalf("Failed writing to destination: %v", err)
 	}

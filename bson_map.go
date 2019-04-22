@@ -58,7 +58,7 @@ func (a *Analyzer) typesOf(colName string, idx mgo.Index) {
 	for i := 0; i < len(idx.Key); i++ {
 		// query is an ordered bson doc
 		query = append(query, primitive.E{Key: idx.Key[i]})
-		go func(query bson.D) {
+		go func(query bson.D, i int) {
 			for _, n := range bsonTyps {
 				cp := make(bson.D, len(query))
 				copy(cp, query)
@@ -71,7 +71,7 @@ func (a *Analyzer) typesOf(colName string, idx mgo.Index) {
 					BsonTyp:    n,
 				}
 			}
-		}(query)
+		}(query, i)
 		for range bsonTyps {
 			tc := <-a.donec
 			if tc.Typ != "" {
@@ -83,7 +83,6 @@ func (a *Analyzer) typesOf(colName string, idx mgo.Index) {
 				break
 			}
 		}
-
 		// unable to find supported $type for index prefix, abort
 		if query[i].Value == nil {
 			break
