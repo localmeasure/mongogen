@@ -100,8 +100,9 @@ func (g *Generator) Generate(pkg *Pkg) {
 		g.p("}")
 		g.p("")
 
-		g.p("func (s *" + t.Plural + ") FindOne(ctx context.Context, filter Filter, hint string, opts ...*options.FindOneOptions) *mongo.SingleResult {")
+		g.p("func (s *" + t.Plural + ") FindOne(ctx context.Context, filter Filter, opts ...*options.FindOneOptions) *mongo.SingleResult {")
 		g.in()
+		g.p("opts = append(opts, options.FindOne().SetHint(filter.Hint))")
 		g.p("return s.db.Collection(%q).FindOne(ctx, filter.Filter, opts...)", t.Collection)
 		g.out()
 		g.p("}")
