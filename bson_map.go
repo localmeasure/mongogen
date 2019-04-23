@@ -80,7 +80,6 @@ func (a *Analyzer) typesOf(colName string, idx mgo.Index) {
 				typReg.Unlock()
 				// set $type for index prefix, next prefix will be filter based on this
 				query[i].Value = bson.M{"$type": tc.BsonTyp}
-				break
 			}
 		}
 		// unable to find supported $type for index prefix, abort

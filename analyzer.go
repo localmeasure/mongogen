@@ -79,46 +79,32 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 			log.Printf("\tanalyze index %s\n", idx.Name)
 			constant := service.Plural + "Idx" + strconv.FormatInt(int64(nth+1), 10)
 			pkg.Consts = append(pkg.Consts, [2]string{constant, idx.Name})
-			var method Method
 			if len(idx.Key) == 1 && idx.Key[0] == "_id" {
-				method = Method{
-					Hint: constant,
-					Name: service.Singular + "WithID",
-					Args: []Argument{{
-						QueryName: "_id",
-						ArgName:   "id",
-						ArgType:   "primitive.ObjectID",
-					}},
+				continue
+			}
+			a.typesOf(colName, idx)
+			mName := service.Singular + "With"
+			mArgs := []Argument{}
+			for i := 0; i < len(idx.Key); i++ {
+				mName += toCamelCase(idx.Key[i], true)
+				typReg.RLock()
+				argType, ok := typReg.ref[colName+idx.Key[i]]
+				typReg.RUnlock()
+				if !ok {
+					argType = "interface{}"
 				}
-				if _, ok := methodSet[method.Name]; !ok {
-					methods = append(methods, method)
-					methodSet[method.Name] = struct{}{}
-				}
-			} else {
-				a.typesOf(colName, idx)
-				mName := service.Singular + "With"
-				mArgs := []Argument{}
-				for i := 0; i < len(idx.Key); i++ {
-					mName += toCamelCase(idx.Key[i], true)
-					typReg.RLock()
-					argType, ok := typReg.ref[colName+idx.Key[i]]
-					typReg.RUnlock()
-					if !ok {
-						argType = "interface{}"
-					}
-					mArgs = append(mArgs, Argument{
-						QueryName: idx.Key[i],
-						ArgName:   escapeGoKeyword(toCamelCase(idx.Key[i], false)),
-						ArgType:   argType,
+				mArgs = append(mArgs, Argument{
+					QueryName: idx.Key[i],
+					ArgName:   escapeGoKeyword(toCamelCase(idx.Key[i], false)),
+					ArgType:   argType,
+				})
+				if _, ok := methodSet[mName]; !ok {
+					methods = append(methods, Method{
+						Name: mName,
+						Args: mArgs,
+						Hint: constant,
 					})
-					if _, ok := methodSet[mName]; !ok {
-						methods = append(methods, Method{
-							Name: mName,
-							Args: mArgs,
-							Hint: constant,
-						})
-						methodSet[mName] = struct{}{}
-					}
+					methodSet[mName] = struct{}{}
 				}
 			}
 		}
