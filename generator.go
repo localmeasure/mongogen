@@ -76,6 +76,13 @@ func (g *Generator) Generate(pkg *Pkg) {
 		g.p("}")
 		g.p("")
 
+		g.p("func New" + t.Plural + "(db *mongo.Database) *" + t.Plural + " {")
+		g.in()
+		g.p("return &" + t.Plural + "{db}")
+		g.out()
+		g.p("}")
+		g.p("")
+
 		for _, m := range t.Methods {
 			g.p("func " + m.Name + "(" + printMethodArgs(m.Args) + ") Filter {")
 			g.in()
