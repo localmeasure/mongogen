@@ -5,7 +5,7 @@ A codegen, generate mongo query builder in golang base on indices, group in serv
 ## install
 ```
 go get github.com/localmeasure/mongogen
-go install github.com/roamz/localmeasure/mongogen
+go install github.com/localmeasure/mongogen/mongogen
 ```
 
 ## generate
