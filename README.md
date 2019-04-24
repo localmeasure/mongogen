@@ -4,17 +4,14 @@ A codegen, generate mongo query builder in golang base on indices, group in serv
 
 ## install
 ```
-go get github.com/roamz/mongogen
-go install github.com/roamz/mongogen/mongogen
+go get github.com/localmeasure/mongogen
+go install github.com/roamz/localmeasure/mongogen
 ```
 
 ## generate
 ```
 mongogen -server mongodb://localhost:27017 -db localmeasure
 ```
-
-Output example:
-https://gitlab.com/localmeasure/std/blob/master/services/mongo.go
 
 ## todo
 * Remove globalsign/mgo (using this due to some current hard code in [mongo-go-driver](https://github.com/mongodb/mongo-go-driver))
