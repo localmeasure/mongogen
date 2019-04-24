@@ -1,4 +1,4 @@
-module github.com/roamz/mongogen
+module github.com/localmeasure/mongogen
 
 go 1.12
 
