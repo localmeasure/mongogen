@@ -121,6 +121,13 @@ func (g *Generator) Generate(pkg *Pkg) {
 		g.out()
 		g.p("}")
 		g.p("")
+
+		g.p("func (s *" + t.Plural + ") Count(ctx context.Context, filter Filter, opts ...*options.CountOptions) (int64, error) {")
+		g.in()
+		g.p("return s.db.Collection(%q).CountDocuments(ctx, filter.Filter, opts...)", t.Collection)
+		g.out()
+		g.p("}")
+		g.p("")
 	}
 }
 

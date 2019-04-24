@@ -75,13 +75,15 @@ func (a *Analyzer) Analyze() (Pkg, error) {
 		}
 		var methods []Method
 		methodSet := make(map[string]struct{})
-		for nth, idx := range indexes {
-			log.Printf("\tanalyze index %s\n", idx.Name)
-			constant := service.Plural + "Idx" + strconv.FormatInt(int64(nth+1), 10)
-			pkg.Consts = append(pkg.Consts, [2]string{constant, idx.Name})
+		nth := 0
+		for _, idx := range indexes {
 			if len(idx.Key) == 1 && idx.Key[0] == "_id" {
 				continue
 			}
+			nth++
+			log.Printf("\tanalyze index %s\n", idx.Name)
+			constant := service.Plural + "Idx" + strconv.FormatInt(int64(nth), 10)
+			pkg.Consts = append(pkg.Consts, [2]string{constant, idx.Name})
 			a.typesOf(colName, idx)
 			mName := service.Singular + "With"
 			mArgs := []Argument{}
