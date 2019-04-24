@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/globalsign/mgo"
-	"github.com/roamz/mongogen"
+	"github.com/localmeasure/mongogen"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
