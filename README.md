@@ -1,18 +1,15 @@
 # mongogen
+static codegen for mongo queries (go:generate)
 
-A codegen, generate mongo query builder in golang base on indices, group in services
+### example
 
-## install
+Declare mongo index specs in .go file
 ```
-go get github.com/localmeasure/mongogen
-go install github.com/localmeasure/mongogen/mongogen
-```
-
-## generate
-```
-mongogen -server mongodb://localhost:27017 -db localmeasure
+//go:generate mongogen -c users -i group_id:id+name:string -i team_id:id+last_seen:time
 ```
 
-## todo
-* Remove globalsign/mgo (using this due to some current hard code in [mongo-go-driver](https://github.com/mongodb/mongo-go-driver))
-* Slowlog unoptimized indices (e.g: objectid-date-objectid)
+Then run
+```
+go generate
+```
+See sample output [here](https://github.com/localmeasure/mongogen/blob/master/_example/mongo_users.go).

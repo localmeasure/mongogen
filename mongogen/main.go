@@ -1,61 +1,60 @@
+// Copyright 2019 Local Measure. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
-	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	"strings"
 
-	"github.com/globalsign/mgo"
 	"github.com/localmeasure/mongogen"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	mongoURI    = flag.String("server", "mongodb://localhost:27017", "mongo server, example: mongodb://localhost:27017")
-	mongoDB     = flag.String("db", "test", "database name, example: test")
-	destination = flag.String("dst", "", "output file; defaults to stdout.")
-	packageName = flag.String("pkg", "services", "package name, example: services")
-)
+var collection = flag.String("c", "", "-c users")
+
+type indexes []string
+
+func (i *indexes) String() string {
+	return fmt.Sprint(*i)
+}
+
+func (i *indexes) Set(value string) error {
+	for _, idx := range strings.Split(value, ",") {
+		*i = append(*i, idx)
+	}
+	return nil
+}
+
+var indexFlags indexes
+
+func init() {
+	flag.Var(&indexFlags, "i", "-i group_id:id+name:string -i team_id:id+last_seen:time")
+}
+
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
 
 func main() {
 	flag.Parse()
-	session, err := mgo.Dial(*mongoURI)
+	g := mongogen.NewGenerator()
+	g.Gen(*collection, indexFlags)
+	f, err := os.Create("mongo_" + strings.ToLower(*collection) + ".go")
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalf("Failed creating file: %v", err)
 	}
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(*mongoURI))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	analyzer := mongogen.NewAnalyzer(session, client.Database(*mongoDB), *mongoDB)
-	pkg, err := analyzer.Analyze()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	dst := os.Stdout
-	if len(*destination) > 0 {
-		if err := os.MkdirAll(filepath.Dir(*destination), os.ModePerm); err != nil {
-			log.Fatalf("Unable to create directory: %v", err)
-		}
-		f, err := os.Create(*destination)
-		if err != nil {
-			log.Fatalf("Failed opening destination file: %v", err)
-		}
-		defer f.Close()
-		dst = f
-	}
-
-	gen := mongogen.NewGenerator(*packageName)
-	gen.Generate(&pkg)
-	if _, err := dst.Write(gen.Output()); err != nil {
+	defer f.Close()
+	if _, err := f.Write(g.Output()); err != nil {
 		log.Fatalf("Failed writing to destination: %v", err)
 	}
 }
