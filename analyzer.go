@@ -22,8 +22,6 @@ var (
 		"[]time": "[]time.Time",
 	}
 	pkgImports = map[string]string{
-		"id":     "go.mongodb.org/mongo-driver/bson/primitive",
-		"[]id":   "go.mongodb.org/mongo-driver/bson/primitive",
 		"time":   "time",
 		"[]time": "time",
 	}
@@ -60,10 +58,11 @@ func analyze(indexes []string, prefix string) pkg {
 	pkg := pkg{
 		name: getPkgName(),
 		imports: map[string]struct{}{
-			"context":                                   struct{}{},
-			"go.mongodb.org/mongo-driver/bson":          struct{}{},
-			"go.mongodb.org/mongo-driver/mongo":         struct{}{},
-			"go.mongodb.org/mongo-driver/mongo/options": struct{}{},
+			"go.mongodb.org/mongo-driver/bson":           struct{}{},
+			"go.mongodb.org/mongo-driver/bson/primitive": struct{}{},
+			"go.mongodb.org/mongo-driver/mongo":          struct{}{},
+			"go.mongodb.org/mongo-driver/mongo/options":  struct{}{},
+			"context": struct{}{},
 		},
 	}
 	methods := []method{}
