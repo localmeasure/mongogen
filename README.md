@@ -1,6 +1,11 @@
 # mongogen
 static codegen for mongo queries (go:generate)
 
+### install
+```
+go install github.com/localmeasure/mongogen/mongogen
+```
+
 ### example
 
 Declare mongo index specs in .go file
