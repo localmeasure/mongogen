@@ -22,6 +22,8 @@ var (
 		"[]time": "[]time.Time",
 	}
 	pkgImports = map[string]string{
+		"id":     "go.mongodb.org/mongo-driver/bson/primitive",
+		"[]id":   "go.mongodb.org/mongo-driver/bson/primitive",
 		"time":   "time",
 		"[]time": "time",
 	}
