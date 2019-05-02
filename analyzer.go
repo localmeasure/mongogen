@@ -10,17 +10,22 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jinzhu/inflection"
 	"golang.org/x/tools/go/packages"
 )
 
 var (
 	bsonMap = map[string]string{
-		"id":   "primitive.ObjectID",
-		"time": "time.Time",
+		"id":     "primitive.ObjectID",
+		"[]id":   "[]primitive.ObjectID",
+		"time":   "time.Time",
+		"[]time": "[]time.Time",
 	}
 	pkgImports = map[string]string{
-		"id":   "go.mongodb.org/mongo-driver/bson/primitive",
-		"time": "time",
+		"id":     "go.mongodb.org/mongo-driver/bson/primitive",
+		"[]id":   "go.mongodb.org/mongo-driver/bson/primitive",
+		"time":   "time",
+		"[]time": "time",
 	}
 	goKeywords = map[string]struct{}{
 		"break":       struct{}{},
@@ -75,7 +80,18 @@ func analyze(indexes []string, prefix string) pkg {
 				typ = bsonMap[kcolon[1]]
 				pkg.imports[pkgImports[kcolon[1]]] = struct{}{}
 			}
-			args = append(args, methodArg{kcolon[0], escapeGoKeyword(toCamelCase(kcolon[0], false)), typ})
+			multiple := false
+			name := escapeGoKeyword(toCamelCase(kcolon[0], false))
+			if typ[:2] == "[]" {
+				multiple = true
+				name = inflection.Plural(name)
+			}
+			args = append(args, methodArg{
+				query:    kcolon[0],
+				name:     name,
+				typ:      typ,
+				multiple: multiple,
+			})
 		}
 		methodName := prefix + "With"
 		var methodArgs []methodArg

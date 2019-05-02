@@ -50,9 +50,10 @@ type method struct {
 }
 
 type methodArg struct {
-	query string
-	name  string
-	typ   string
+	query    string
+	name     string
+	typ      string
+	multiple bool
 }
 
 func (g *Generator) Gen(collection string, indexes []string) {
@@ -157,7 +158,7 @@ func (g *Generator) Gen(collection string, indexes []string) {
 func printMethodArgs(args []methodArg) string {
 	out := ""
 	for _, arg := range args {
-		out += arg.name + " " + arg.typ + ", "
+		out += fmt.Sprintf("%s %s, ", arg.name, arg.typ)
 	}
 	return out[:len(out)-2]
 }
@@ -165,7 +166,11 @@ func printMethodArgs(args []methodArg) string {
 func printMethodReturn(returnTyp string, args []methodArg) string {
 	out := ""
 	for _, arg := range args {
-		out += "{Key: \"" + arg.query + "\", Value: " + arg.name + "}, "
+		if arg.multiple {
+			out += fmt.Sprintf("{Key: %q, Value: bson.M{%q: %s}}, ", arg.query, "$in", arg.name)
+		} else {
+			out += fmt.Sprintf("{Key: %q, Value: %s}, ", arg.query, arg.name)
+		}
 	}
-	return "return " + returnTyp + "Filter{bson.D{" + out[:len(out)-2] + "}}"
+	return fmt.Sprintf("return %sFilter{bson.D{%s}}", returnTyp, out[:len(out)-2])
 }
