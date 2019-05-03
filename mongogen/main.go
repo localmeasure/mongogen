@@ -9,12 +9,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/localmeasure/mongogen"
 )
 
-var collection = flag.String("c", "", "-c users")
+var (
+	pkg        = flag.String("p", "", "-p users")
+	collection = flag.String("c", "", "-c users")
+)
 
 type indexes []string
 
@@ -49,7 +53,12 @@ func main() {
 	flag.Parse()
 	g := mongogen.NewGenerator()
 	g.Gen(*collection, indexFlags)
-	f, err := os.Create("mongo_" + strings.ToLower(*collection) + ".go")
+	dst := path.Join(*pkg, strings.ToLower(*collection)+".go")
+	err := os.MkdirAll(path.Dir(dst), 0700)
+	if err != nil {
+		log.Fatalf("Failed creating dir: %v", path.Dir(dst))
+	}
+	f, err := os.Create(path.Join(*pkg, strings.ToLower(*collection)+".go"))
 	if err != nil {
 		log.Fatalf("Failed creating file: %v", err)
 	}
