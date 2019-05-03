@@ -5,12 +5,8 @@
 package mongogen
 
 import (
-	"flag"
 	"log"
-	"path/filepath"
 	"strings"
-
-	"golang.org/x/tools/go/packages"
 )
 
 var (
@@ -83,7 +79,6 @@ type indexKey struct {
 
 func analyze(parsed []string, prefix string) pkg {
 	pkg := pkg{
-		name: getPkgName(),
 		imports: map[string]struct{}{
 			"go.mongodb.org/mongo-driver/bson":           struct{}{},
 			"go.mongodb.org/mongo-driver/bson/primitive": struct{}{},
@@ -130,24 +125,6 @@ func analyze(parsed []string, prefix string) pkg {
 	}
 	pkg.indexes = indexes
 	return pkg
-}
-
-func getPkgName() string {
-	args := flag.Args()
-	dir := "."
-	if len(args) > 0 {
-		// Default: process whole package in current directory.
-		dir = filepath.Dir(args[0])
-	}
-	cfg := &packages.Config{Mode: packages.LoadSyntax, Tests: false}
-	pkgs, err := packages.Load(cfg, dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(pkgs) < 1 {
-		log.Fatal("no packages found")
-	}
-	return pkgs[0].Name
 }
 
 func escapeGoKeyword(key string) string {

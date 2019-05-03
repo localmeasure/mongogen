@@ -52,13 +52,13 @@ func isFlagPassed(name string) bool {
 func main() {
 	flag.Parse()
 	g := mongogen.NewGenerator()
-	g.Gen(*collection, indexFlags)
-	dst := path.Join(*pkg, strings.ToLower(*collection)+".go")
+	g.Gen(*pkg, *collection, indexFlags)
+	dst := path.Join(*pkg, "mongo.go")
 	err := os.MkdirAll(path.Dir(dst), 0700)
 	if err != nil {
 		log.Fatalf("Failed creating dir: %v", path.Dir(dst))
 	}
-	f, err := os.Create(path.Join(*pkg, strings.ToLower(*collection)+".go"))
+	f, err := os.Create(dst)
 	if err != nil {
 		log.Fatalf("Failed creating file: %v", err)
 	}
