@@ -211,7 +211,12 @@ func printOps(g *Generator, ops []string, key indexKey, idxName string) {
 
 func printEq(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true)
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	// multikey indexes will still have single value
+	typ := key.typ
+	if typ[:2] == "[]" {
+		typ = typ[2:]
+	}
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, typ, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$eq")
 	g.p("return use")
@@ -221,7 +226,12 @@ func printEq(g *Generator, key indexKey, idxName string) {
 
 func printNe(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Ne"
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	// multikey indexes will still have single value
+	typ := key.typ
+	if typ[:2] == "[]" {
+		typ = typ[2:]
+	}
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, typ, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$ne")
 	g.p("return use")
