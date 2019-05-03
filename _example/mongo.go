@@ -42,10 +42,10 @@ func UseGroupIdName() *useGroupIdName {
 	return &useGroupIdName{groupId: bson.M{"$eq": 0}}
 }
 
-func (use *useGroupIdName) Filter() UserFilter {
+func (use *useGroupIdName) Build() UserFilter {
 	filter := bson.D{primitive.E{Key: "group_id", Value: use.groupId}}
 	if use.name != nil {
-	filter = append(filter, primitive.E{Key: "group_id", Value: use.groupId})
+		filter = append(filter, primitive.E{Key: "group_id", Value: use.groupId})
 	}
 	return UserFilter{filter}
 }
@@ -119,10 +119,10 @@ func UseTeamIdLastSeen() *useTeamIdLastSeen {
 	return &useTeamIdLastSeen{teamId: bson.M{"$eq": 0}}
 }
 
-func (use *useTeamIdLastSeen) Filter() UserFilter {
+func (use *useTeamIdLastSeen) Build() UserFilter {
 	filter := bson.D{primitive.E{Key: "team_id", Value: use.teamId}}
 	if use.lastSeen != nil {
-	filter = append(filter, primitive.E{Key: "team_id", Value: use.teamId})
+		filter = append(filter, primitive.E{Key: "team_id", Value: use.teamId})
 	}
 	return UserFilter{filter}
 }

@@ -168,12 +168,14 @@ func printIdxFn(g *Generator, idx index) {
 }
 
 func printIdxFilter(g *Generator, idx index, filterTyp string) {
-	g.p("func (use *%s) Filter() %s {", idx.name, filterTyp)
+	g.p("func (use *%s) Build() %s {", idx.name, filterTyp)
 	g.in()
 	g.p("filter := bson.D{primitive.E{Key: %q, Value: use.%s}}", idx.keys[0].name, idx.keys[0].goname)
 	for i := 1; i < len(idx.keys); i++ {
 		g.p("if use.%s != nil {", idx.keys[i].goname)
+		g.in()
 		g.p("filter = append(filter, primitive.E{Key: %q, Value: use.%s})", idx.keys[0].name, idx.keys[0].goname)
+		g.out()
 		g.p("}")
 	}
 	g.p("return %s{filter}", filterTyp)
