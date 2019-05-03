@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jinzhu/inflection"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -21,11 +20,26 @@ var (
 		"time":   "time.Time",
 		"[]time": "[]time.Time",
 	}
+	typOps = map[string][]string{
+		"primitive.ObjectID": []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte"},
+		"string":             []string{"eq", "ne", "in", "nin"},
+		"bool":               []string{"eq", "ne"},
+		"int":                []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte"},
+		"float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte"},
+		"time.Time":          []string{"gt", "gte", "lt", "lte"},
+
+		// multikey indexes
+		"[]primitive.ObjectID": []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
+		"[]string":             []string{"eq", "ne", "in", "nin", "all"},
+		"[]int":                []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
+		"[]float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
+		"[]time.Time":          []string{"gt", "gte", "lt", "lte", "all"},
+	}
 	pkgImports = map[string]string{
-		"id":     "go.mongodb.org/mongo-driver/bson/primitive",
-		"[]id":   "go.mongodb.org/mongo-driver/bson/primitive",
-		"time":   "time",
-		"[]time": "time",
+		"primitive.ObjectID":   "go.mongodb.org/mongo-driver/bson/primitive",
+		"[]primitive.ObjectID": "go.mongodb.org/mongo-driver/bson/primitive",
+		"time.Time":            "time",
+		"[]time.Time":          "time",
 	}
 	goKeywords = map[string]struct{}{
 		"break":       struct{}{},
@@ -56,7 +70,18 @@ var (
 	}
 )
 
-func analyze(indexes []string, prefix string) pkg {
+type index struct {
+	name string
+	keys []indexKey
+}
+
+type indexKey struct {
+	name   string
+	goname string
+	typ    string
+}
+
+func analyze(parsed []string, prefix string) pkg {
 	pkg := pkg{
 		name: getPkgName(),
 		imports: map[string]struct{}{
@@ -67,45 +92,43 @@ func analyze(indexes []string, prefix string) pkg {
 			"context": struct{}{},
 		},
 	}
-	methods := []method{}
-	for i := 0; i < len(indexes); i++ {
-		var args []methodArg
-		kplus := strings.Split(indexes[i], "+")
-		for n := 0; n < len(kplus); n++ {
-			kcolon := strings.Split(kplus[n], ":")
-			if len(kcolon) < 2 {
+	var indexes []index
+	for i := 0; i < len(parsed); i++ {
+		var idx index
+		parsedKeys := strings.Split(parsed[i], "+")
+		first := true
+		for n := 0; n < len(parsedKeys); n++ {
+			spec := strings.Split(parsedKeys[n], ":")
+			if len(spec) < 2 {
+				first = false
 				continue
 			}
-			typ := kcolon[1]
-			if _, ok := bsonMap[kcolon[1]]; ok {
-				typ = bsonMap[kcolon[1]]
-				pkg.imports[pkgImports[kcolon[1]]] = struct{}{}
+			typ, ok := bsonMap[spec[1]]
+			if !ok {
+				typ = spec[1]
 			}
-			multiple := false
-			name := escapeGoKeyword(toCamelCase(kcolon[0], false))
-			if typ[:2] == "[]" {
-				multiple = true
-				name = inflection.Plural(name)
+			_, ok = typOps[typ]
+			if first && !ok {
+				log.Fatal("Fatal: type of first key is not supported")
 			}
-			args = append(args, methodArg{
-				query:    kcolon[0],
-				name:     name,
-				typ:      typ,
-				multiple: multiple,
+			_, ok = pkgImports[typ]
+			if ok {
+				// import necessary packages
+				pkg.imports[pkgImports[typ]] = struct{}{}
+			}
+			goname := toCamelCase(spec[0], false)
+			idx.name += toCamelCase(goname, true)
+			idx.keys = append(idx.keys, indexKey{
+				name:   spec[0],
+				goname: escapeGoKeyword(goname),
+				typ:    typ,
 			})
+			first = false
 		}
-		methodName := prefix + "With"
-		var methodArgs []methodArg
-		for _, arg := range args {
-			methodName += toCamelCase(arg.name, true)
-			methodArgs = append(methodArgs, arg)
-			methods = append(methods, method{
-				name: methodName,
-				args: methodArgs,
-			})
-		}
+		idx.name = "use" + idx.name
+		indexes = append(indexes, idx)
 	}
-	pkg.methods = methods
+	pkg.indexes = indexes
 	return pkg
 }
 
