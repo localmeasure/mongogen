@@ -24,12 +24,11 @@ var (
 		"float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte"},
 		"time.Time":          []string{"gt", "gte", "lt", "lte"},
 
-		// multikey indexes
-		"[]primitive.ObjectID": []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
-		"[]string":             []string{"eq", "ne", "in", "nin", "all"},
-		"[]int":                []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
-		"[]float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all"},
-		"[]time.Time":          []string{"gt", "gte", "lt", "lte", "all"},
+		"[]primitive.ObjectID": []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all", "elemMatch", "size"},
+		"[]string":             []string{"eq", "ne", "in", "nin", "all", "elemMatch", "size"},
+		"[]int":                []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all", "elemMatch", "size"},
+		"[]float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all", "elemMatch", "size"},
+		"[]time.Time":          []string{"gt", "gte", "lt", "lte"},
 	}
 	pkgImports = map[string]string{
 		"primitive.ObjectID":   "go.mongodb.org/mongo-driver/bson/primitive",
@@ -72,9 +71,10 @@ type index struct {
 }
 
 type indexKey struct {
-	name   string
-	goname string
-	typ    string
+	name    string
+	goname  string
+	typ     string
+	literal string
 }
 
 func analyze(parsed []string, prefix string) pkg {
@@ -88,15 +88,16 @@ func analyze(parsed []string, prefix string) pkg {
 		},
 	}
 	var indexes []index
+	var indexNames = make(map[string]struct{})
 	for i := 0; i < len(parsed); i++ {
 		var idx index
 		parsedKeys := strings.Split(parsed[i], "+")
 		first := true
+		hasName := false
 		for n := 0; n < len(parsedKeys); n++ {
 			spec := strings.Split(parsedKeys[n], ":")
 			if len(spec) < 2 {
-				first = false
-				continue
+				log.Fatal("Fatal: wrong index specs")
 			}
 			typ, ok := bsonMap[spec[1]]
 			if !ok {
@@ -112,11 +113,20 @@ func analyze(parsed []string, prefix string) pkg {
 				pkg.imports[pkgImports[typ]] = struct{}{}
 			}
 			goname := toCamelCase(spec[0], false)
-			idx.name += toCamelCase(goname, true)
+			if !hasName {
+				idx.name += toCamelCase(goname, true)
+				if _, ok := indexNames[idx.name]; ok {
+					hasName = false
+				} else {
+					indexNames[idx.name] = struct{}{}
+					hasName = true
+				}
+			}
 			idx.keys = append(idx.keys, indexKey{
-				name:   spec[0],
-				goname: escapeGoKeyword(goname),
-				typ:    typ,
+				name:    spec[0],
+				goname:  escapeGoKeyword(goname),
+				typ:     typ,
+				literal: strings.TrimLeft(typ, "[]"),
 			})
 			first = false
 		}

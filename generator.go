@@ -174,7 +174,7 @@ func printIdxFilter(g *Generator, idx index, filterTyp string) {
 	for i := 1; i < len(idx.keys); i++ {
 		g.p("if use.%s != nil {", idx.keys[i].goname)
 		g.in()
-		g.p("filter = append(filter, primitive.E{Key: %q, Value: use.%s})", idx.keys[0].name, idx.keys[0].goname)
+		g.p("filter = append(filter, primitive.E{Key: %q, Value: use.%s})", idx.keys[i].name, idx.keys[i].goname)
 		g.out()
 		g.p("}")
 	}
@@ -204,6 +204,10 @@ func printOps(g *Generator, ops []string, key indexKey, idxName string) {
 			printLte(g, key, idxName)
 		case "all":
 			printAll(g, key, idxName)
+		case "elemMatch":
+			printElemMatch(g, key, idxName)
+		case "size":
+			printSize(g, key, idxName)
 		}
 		g.p("")
 	}
@@ -212,11 +216,7 @@ func printOps(g *Generator, ops []string, key indexKey, idxName string) {
 func printEq(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true)
 	// multikey indexes will still have single value
-	typ := key.typ
-	if typ[:2] == "[]" {
-		typ = typ[2:]
-	}
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$eq")
 	g.p("return use")
@@ -226,12 +226,7 @@ func printEq(g *Generator, key indexKey, idxName string) {
 
 func printNe(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Ne"
-	// multikey indexes will still have single value
-	typ := key.typ
-	if typ[:2] == "[]" {
-		typ = typ[2:]
-	}
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$ne")
 	g.p("return use")
@@ -241,7 +236,7 @@ func printNe(g *Generator, key indexKey, idxName string) {
 
 func printIn(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "In"
-	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, "[]"+key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: values}", key.goname, "$in")
 	g.p("return use")
@@ -251,7 +246,7 @@ func printIn(g *Generator, key indexKey, idxName string) {
 
 func printNin(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Nin"
-	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, "[]"+key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: values}", key.goname, "$nin")
 	g.p("return use")
@@ -261,7 +256,7 @@ func printNin(g *Generator, key indexKey, idxName string) {
 
 func printGt(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Gt"
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$gt")
 	g.p("return use")
@@ -271,7 +266,7 @@ func printGt(g *Generator, key indexKey, idxName string) {
 
 func printGte(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Gte"
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$gte")
 	g.p("return use")
@@ -281,7 +276,7 @@ func printGte(g *Generator, key indexKey, idxName string) {
 
 func printLt(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Lt"
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$lt")
 	g.p("return use")
@@ -291,7 +286,7 @@ func printLt(g *Generator, key indexKey, idxName string) {
 
 func printLte(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "Lte"
-	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(value %s) *%s {", idxName, fnName, key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: value}", key.goname, "$lte")
 	g.p("return use")
@@ -301,9 +296,29 @@ func printLte(g *Generator, key indexKey, idxName string) {
 
 func printAll(g *Generator, key indexKey, idxName string) {
 	fnName := "With" + toCamelCase(key.goname, true) + "All"
-	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, key.typ, idxName)
+	g.p("func (use *%s) %s(values %s) *%s {", idxName, fnName, "[]"+key.literal, idxName)
 	g.in()
 	g.p("use.%s = bson.M{%q: values}", key.goname, "$all")
+	g.p("return use")
+	g.out()
+	g.p("}")
+}
+
+func printElemMatch(g *Generator, key indexKey, idxName string) {
+	fnName := "With" + toCamelCase(key.goname, true) + "ElemMatch"
+	g.p("func (use *%s) %s(value bson.M) *%s {", idxName, fnName, idxName)
+	g.in()
+	g.p("use.%s = bson.M{%q: value}", key.goname, "$elemMatch")
+	g.p("return use")
+	g.out()
+	g.p("}")
+}
+
+func printSize(g *Generator, key indexKey, idxName string) {
+	fnName := "With" + toCamelCase(key.goname, true) + "Size"
+	g.p("func (use *%s) %s(value int) *%s {", idxName, fnName, idxName)
+	g.in()
+	g.p("use.%s = bson.M{%q: value}", key.goname, "$size")
 	g.p("return use")
 	g.out()
 	g.p("}")
