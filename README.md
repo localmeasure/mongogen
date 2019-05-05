@@ -1,5 +1,5 @@
 # mongogen
-static codegen for mongo queries (go:generate)
+static codegen for mongodb index queries (go:generate)
 
 ### install
 ```
