@@ -17,4 +17,4 @@ Then run
 ```
 go generate
 ```
-See sample output [here](https://github.com/localmeasure/mongogen/blob/master/_example/mongo_users.go).
+See sample output [here](https://github.com/localmeasure/mongogen/blob/master/_example/mongo.go).
