@@ -10,7 +10,7 @@ go install github.com/localmeasure/mongogen/mongogen
 
 Declare mongo index specs in .go file
 ```
-//go:generate mongogen -c users -i group_id:id+name:string -i team_id:id+last_seen:time
+//go:generate mongogen -p users -c users -i group_id:id+name:string -i team_id:id+last_seen:time
 ```
 
 Then run
