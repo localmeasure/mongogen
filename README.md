@@ -3,6 +3,7 @@ static codegen for mongo queries (go:generate)
 
 ### install
 ```
+go get github.com/localmeasure/mongogen
 go install github.com/localmeasure/mongogen/mongogen
 ```
 
