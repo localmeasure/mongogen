@@ -5,24 +5,22 @@
 package users
 
 import (
+	"time"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"context"
-	"time"
 )
+
+var db *mongo.Database
+
+func SetDB(d *mongo.Database) {
+	db = d
+}
 
 type UserFilter struct {
 	Filter bson.D
-}
-
-type Users struct {
-	db *mongo.Database
-}
-
-func NewService(db *mongo.Database) *Users {
-	return &Users{db}
 }
 
 func UserWithID(id primitive.ObjectID) UserFilter {
@@ -33,176 +31,224 @@ func UserWithIDs(ids []primitive.ObjectID) UserFilter {
 	return UserFilter{bson.D{{Key: "_id", Value: bson.M{"$in": ids}}}}
 }
 
-type useGroupIdName struct {
+type useGroupId struct {
 	groupId                 bson.M
 	name                    bson.M
 }
 
-func UseGroupIdName() *useGroupIdName {
-	return &useGroupIdName{groupId: bson.M{"$eq": 0}}
+func UseGroupId() *useGroupId {
+	return &useGroupId{groupId: bson.M{"$eq": 0}}
 }
 
-func (use *useGroupIdName) Build() UserFilter {
+func (use *useGroupId) Build() UserFilter {
 	filter := bson.D{primitive.E{Key: "group_id", Value: use.groupId}}
 	if use.name != nil {
-		filter = append(filter, primitive.E{Key: "group_id", Value: use.groupId})
+		filter = append(filter, primitive.E{Key: "name", Value: use.name})
 	}
 	return UserFilter{filter}
 }
 
-func (use *useGroupIdName) WithGroupId(value primitive.ObjectID) *useGroupIdName {
+func (use *useGroupId) WithGroupId(value primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdNe(value primitive.ObjectID) *useGroupIdName {
+func (use *useGroupId) WithGroupIdNe(value primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdIn(values primitive.ObjectID) *useGroupIdName {
+func (use *useGroupId) WithGroupIdIn(values []primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$in": values}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdNin(values primitive.ObjectID) *useGroupIdName {
+func (use *useGroupId) WithGroupIdNin(values []primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$nin": values}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdGt(value primitive.ObjectID) *useGroupIdName {
-	use.groupId = bson.M{"$gt": value}
+func (use *useGroupId) WithGroupIdGt(value primitive.ObjectID) *useGroupId {
+	if use.groupId != nil {
+		use.groupId["$gt"] = value
+	} else {
+		use.groupId = bson.M{"$gt": value}
+	}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdGte(value primitive.ObjectID) *useGroupIdName {
-	use.groupId = bson.M{"$gte": value}
+func (use *useGroupId) WithGroupIdGte(value primitive.ObjectID) *useGroupId {
+	if use.groupId != nil {
+		use.groupId["$gte"] = value
+	} else {
+		use.groupId = bson.M{"$gte": value}
+	}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdLt(value primitive.ObjectID) *useGroupIdName {
-	use.groupId = bson.M{"$lt": value}
+func (use *useGroupId) WithGroupIdLt(value primitive.ObjectID) *useGroupId {
+	if use.groupId != nil {
+		use.groupId["$lt"] = value
+	} else {
+		use.groupId = bson.M{"$lt": value}
+	}
 	return use
 }
 
-func (use *useGroupIdName) WithGroupIdLte(value primitive.ObjectID) *useGroupIdName {
-	use.groupId = bson.M{"$lte": value}
+func (use *useGroupId) WithGroupIdLte(value primitive.ObjectID) *useGroupId {
+	if use.groupId != nil {
+		use.groupId["$lte"] = value
+	} else {
+		use.groupId = bson.M{"$lte": value}
+	}
 	return use
 }
 
-func (use *useGroupIdName) WithName(value string) *useGroupIdName {
+func (use *useGroupId) WithName(value string) *useGroupId {
 	use.name = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useGroupIdName) WithNameNe(value string) *useGroupIdName {
+func (use *useGroupId) WithNameNe(value string) *useGroupId {
 	use.name = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useGroupIdName) WithNameIn(values string) *useGroupIdName {
+func (use *useGroupId) WithNameIn(values []string) *useGroupId {
 	use.name = bson.M{"$in": values}
 	return use
 }
 
-func (use *useGroupIdName) WithNameNin(values string) *useGroupIdName {
+func (use *useGroupId) WithNameNin(values []string) *useGroupId {
 	use.name = bson.M{"$nin": values}
 	return use
 }
 
-type useTeamIdLastSeen struct {
+type useTeamId struct {
 	teamId                  bson.M
 	lastSeen                bson.M
 }
 
-func UseTeamIdLastSeen() *useTeamIdLastSeen {
-	return &useTeamIdLastSeen{teamId: bson.M{"$eq": 0}}
+func UseTeamId() *useTeamId {
+	return &useTeamId{teamId: bson.M{"$eq": 0}}
 }
 
-func (use *useTeamIdLastSeen) Build() UserFilter {
+func (use *useTeamId) Build() UserFilter {
 	filter := bson.D{primitive.E{Key: "team_id", Value: use.teamId}}
 	if use.lastSeen != nil {
-		filter = append(filter, primitive.E{Key: "team_id", Value: use.teamId})
+		filter = append(filter, primitive.E{Key: "last_seen", Value: use.lastSeen})
 	}
 	return UserFilter{filter}
 }
 
-func (use *useTeamIdLastSeen) WithTeamId(value primitive.ObjectID) *useTeamIdLastSeen {
+func (use *useTeamId) WithTeamId(value primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdNe(value primitive.ObjectID) *useTeamIdLastSeen {
+func (use *useTeamId) WithTeamIdNe(value primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdIn(values primitive.ObjectID) *useTeamIdLastSeen {
+func (use *useTeamId) WithTeamIdIn(values []primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$in": values}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdNin(values primitive.ObjectID) *useTeamIdLastSeen {
+func (use *useTeamId) WithTeamIdNin(values []primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$nin": values}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdGt(value primitive.ObjectID) *useTeamIdLastSeen {
-	use.teamId = bson.M{"$gt": value}
+func (use *useTeamId) WithTeamIdGt(value primitive.ObjectID) *useTeamId {
+	if use.teamId != nil {
+		use.teamId["$gt"] = value
+	} else {
+		use.teamId = bson.M{"$gt": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdGte(value primitive.ObjectID) *useTeamIdLastSeen {
-	use.teamId = bson.M{"$gte": value}
+func (use *useTeamId) WithTeamIdGte(value primitive.ObjectID) *useTeamId {
+	if use.teamId != nil {
+		use.teamId["$gte"] = value
+	} else {
+		use.teamId = bson.M{"$gte": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdLt(value primitive.ObjectID) *useTeamIdLastSeen {
-	use.teamId = bson.M{"$lt": value}
+func (use *useTeamId) WithTeamIdLt(value primitive.ObjectID) *useTeamId {
+	if use.teamId != nil {
+		use.teamId["$lt"] = value
+	} else {
+		use.teamId = bson.M{"$lt": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithTeamIdLte(value primitive.ObjectID) *useTeamIdLastSeen {
-	use.teamId = bson.M{"$lte": value}
+func (use *useTeamId) WithTeamIdLte(value primitive.ObjectID) *useTeamId {
+	if use.teamId != nil {
+		use.teamId["$lte"] = value
+	} else {
+		use.teamId = bson.M{"$lte": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithLastSeenGt(value time.Time) *useTeamIdLastSeen {
-	use.lastSeen = bson.M{"$gt": value}
+func (use *useTeamId) WithLastSeenGt(value time.Time) *useTeamId {
+	if use.lastSeen != nil {
+		use.lastSeen["$gt"] = value
+	} else {
+		use.lastSeen = bson.M{"$gt": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithLastSeenGte(value time.Time) *useTeamIdLastSeen {
-	use.lastSeen = bson.M{"$gte": value}
+func (use *useTeamId) WithLastSeenGte(value time.Time) *useTeamId {
+	if use.lastSeen != nil {
+		use.lastSeen["$gte"] = value
+	} else {
+		use.lastSeen = bson.M{"$gte": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithLastSeenLt(value time.Time) *useTeamIdLastSeen {
-	use.lastSeen = bson.M{"$lt": value}
+func (use *useTeamId) WithLastSeenLt(value time.Time) *useTeamId {
+	if use.lastSeen != nil {
+		use.lastSeen["$lt"] = value
+	} else {
+		use.lastSeen = bson.M{"$lt": value}
+	}
 	return use
 }
 
-func (use *useTeamIdLastSeen) WithLastSeenLte(value time.Time) *useTeamIdLastSeen {
-	use.lastSeen = bson.M{"$lte": value}
+func (use *useTeamId) WithLastSeenLte(value time.Time) *useTeamId {
+	if use.lastSeen != nil {
+		use.lastSeen["$lte"] = value
+	} else {
+		use.lastSeen = bson.M{"$lte": value}
+	}
 	return use
 }
 
-func (s *Users) Find(ctx context.Context, filter UserFilter, opts ...*options.FindOptions) (*mongo.Cursor, error) {
-	return s.db.Collection("users").Find(ctx, filter.Filter, opts...)
+func Find(ctx context.Context, filter UserFilter, opts ...*options.FindOptions) (*mongo.Cursor, error) {
+	return db.Collection("users").Find(ctx, filter.Filter, opts...)
 }
 
-func (s *Users) FindWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.FindOptions) (*mongo.Cursor, error) {
-	return s.db.Collection("users").Find(ctx, bson.M{"_id": bson.M{"$in": ids}}, opts...)
+func FindWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.FindOptions) (*mongo.Cursor, error) {
+	return db.Collection("users").Find(ctx, bson.M{"_id": bson.M{"$in": ids}}, opts...)
 }
 
-func (s *Users) FindOne(ctx context.Context, filter UserFilter, opts ...*options.FindOneOptions) *mongo.SingleResult {
-	return s.db.Collection("users").FindOne(ctx, filter.Filter, opts...)
+func FindOne(ctx context.Context, filter UserFilter, opts ...*options.FindOneOptions) *mongo.SingleResult {
+	return db.Collection("users").FindOne(ctx, filter.Filter, opts...)
 }
 
-func (s *Users) FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.FindOneOptions) *mongo.SingleResult {
-	return s.db.Collection("users").FindOne(ctx, bson.M{"_id": id}, opts...)
+func FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.FindOneOptions) *mongo.SingleResult {
+	return db.Collection("users").FindOne(ctx, bson.M{"_id": id}, opts...)
 }
 
-func (s *Users) Count(ctx context.Context, filter UserFilter, opts ...*options.CountOptions) (int64, error) {
-	return s.db.Collection("users").CountDocuments(ctx, filter.Filter, opts...)
+func Count(ctx context.Context, filter UserFilter, opts ...*options.CountOptions) (int64, error) {
+	return db.Collection("users").CountDocuments(ctx, filter.Filter, opts...)
 }
