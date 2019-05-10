@@ -249,6 +249,42 @@ func FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.
 	return db.Collection("users").FindOne(ctx, bson.M{"_id": id}, opts...)
 }
 
+func InsertOne(ctx context.Context, document bson.M, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
+	return db.Collection("users").InsertOne(ctx, document, opts...)
+}
+
+func InsertMany(ctx context.Context, documents []interface{}, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {
+	return db.Collection("users").InsertMany(ctx, documents, opts...)
+}
+
+func UpdateOne(ctx context.Context, id primitive.ObjectID, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	return db.Collection("users").UpdateOne(ctx, bson.M{"_id": id}, update, opts...)
+}
+
+func UpdateMany(ctx context.Context, filter UserFilter, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	return db.Collection("users").UpdateMany(ctx, filter.Filter, update, opts...)
+}
+
+func DeleteMany(ctx context.Context, filter UserFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	return db.Collection("users").DeleteMany(ctx, filter.Filter, opts...)
+}
+
+func DeleteWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	return db.Collection("users").DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}}, opts...)
+}
+
+func DeleteOne(ctx context.Context, filter UserFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	return db.Collection("users").DeleteOne(ctx, filter.Filter, opts...)
+}
+
+func DeleteOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	return db.Collection("users").DeleteOne(ctx, bson.M{"_id": id}, opts...)
+}
+
 func Count(ctx context.Context, filter UserFilter, opts ...*options.CountOptions) (int64, error) {
 	return db.Collection("users").CountDocuments(ctx, filter.Filter, opts...)
+}
+
+func Aggregate(ctx context.Context, pipeline mongo.Pipeline, opts ...*options.AggregateOptions) (*mongo.Cursor, error) {
+	return db.Collection("users").Aggregate(ctx, pipeline, opts...)
 }
