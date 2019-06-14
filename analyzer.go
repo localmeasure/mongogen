@@ -30,7 +30,7 @@ var (
 		"[]float64":            []string{"eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "all", "elemMatch", "size"},
 		"[]time.Time":          []string{"gt", "gte", "lt", "lte"},
 	}
-	pkgImports = map[string]string{
+	typToImport = map[string]string{
 		"primitive.ObjectID":   "go.mongodb.org/mongo-driver/bson/primitive",
 		"[]primitive.ObjectID": "go.mongodb.org/mongo-driver/bson/primitive",
 		"time.Time":            "time",
@@ -65,26 +65,39 @@ var (
 	}
 )
 
-type index struct {
-	name string
-	keys []indexKey
-}
-
-type indexKey struct {
-	name    string
-	goname  string
-	typ     string
-	literal string
-}
+type (
+	pkg struct {
+		imported map[string]struct{}
+		indexes  []index
+		imports  []string
+	}
+	index struct {
+		name string
+		keys []indexKey
+	}
+	indexKey struct {
+		name    string
+		goname  string
+		typ     string
+		literal string
+	}
+)
 
 func analyze(parsed []string, prefix string) pkg {
 	pkg := pkg{
-		imports: map[string]struct{}{
-			"go.mongodb.org/mongo-driver/bson":           struct{}{},
+		imports: []string{
+			"context",
+			"go.mongodb.org/mongo-driver/bson",
+			"go.mongodb.org/mongo-driver/bson/primitive",
+			"go.mongodb.org/mongo-driver/mongo",
+			"go.mongodb.org/mongo-driver/mongo/options",
+		},
+		imported: map[string]struct{}{
+			"context":                          struct{}{},
+			"go.mongodb.org/mongo-driver/bson": struct{}{},
 			"go.mongodb.org/mongo-driver/bson/primitive": struct{}{},
 			"go.mongodb.org/mongo-driver/mongo":          struct{}{},
 			"go.mongodb.org/mongo-driver/mongo/options":  struct{}{},
-			"context": struct{}{},
 		},
 	}
 	var indexes []index
@@ -107,10 +120,11 @@ func analyze(parsed []string, prefix string) pkg {
 			if first && !ok {
 				log.Fatal("Fatal: type of first key is not supported")
 			}
-			_, ok = pkgImports[typ]
-			if ok {
-				// import necessary packages
-				pkg.imports[pkgImports[typ]] = struct{}{}
+			path, ok := typToImport[typ]
+			_, redo := pkg.imported[path]
+			if ok && !redo {
+				pkg.imported[path] = struct{}{}
+				pkg.imports = append(pkg.imports, path)
 			}
 			goname := toCamelCase(spec[0], false)
 			if !hasName {

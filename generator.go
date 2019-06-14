@@ -38,11 +38,6 @@ func (g *Generator) Output() []byte {
 	return g.buf.Bytes()
 }
 
-type pkg struct {
-	imports map[string]struct{}
-	indexes []index
-}
-
 func (g *Generator) Gen(pkgName string, collection string, indexes []string) {
 	public := toCamelCase(collection, true)
 	singular := inflection.Singular(public)
@@ -55,19 +50,23 @@ func (g *Generator) Gen(pkgName string, collection string, indexes []string) {
 	g.p("")
 	g.p("import (")
 	g.in()
-	for path := range pkg.imports {
+	for _, path := range pkg.imports {
 		g.p("%q", path)
 	}
 	g.out()
 	g.p(")")
 	g.p("")
 
-	g.p("var db *mongo.Database")
+	g.p("func New(d *mongo.Database) *Svc {")
+	g.in()
+	g.p("return &Svc{d: d}")
+	g.out()
+	g.p("}")
 	g.p("")
 
-	g.p("func SetDB(d *mongo.Database) {")
+	g.p("type Svc struct {")
 	g.in()
-	g.p("db = d")
+	g.p("d *mongo.Database")
 	g.out()
 	g.p("}")
 	g.p("")
@@ -108,100 +107,100 @@ func (g *Generator) Gen(pkgName string, collection string, indexes []string) {
 		}
 	}
 
-	g.p("func Find(ctx context.Context, filter %s, opts ...*options.FindOptions) (*mongo.Cursor, error) {", filterTyp)
+	g.p("func (s *Svc) Find(ctx context.Context, filter %s, opts ...*options.FindOptions) (*mongo.Cursor, error) {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).Find(ctx, filter.Filter, opts...)", collection)
+	g.p("return s.d.Collection(%q).Find(ctx, filter.Filter, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func FindWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.FindOptions) (*mongo.Cursor, error) {")
+	g.p("func (s *Svc) FindWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.FindOptions) (*mongo.Cursor, error) {")
 	g.in()
-	g.p("return db.Collection(%q).Find(ctx, bson.M{%q: bson.M{%q: ids}}, opts...)", collection, "_id", "$in")
+	g.p("return s.d.Collection(%q).Find(ctx, bson.M{%q: bson.M{%q: ids}}, opts...)", collection, "_id", "$in")
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func FindOne(ctx context.Context, filter %s, opts ...*options.FindOneOptions) *mongo.SingleResult {", filterTyp)
+	g.p("func (s *Svc) FindOne(ctx context.Context, filter %s, opts ...*options.FindOneOptions) *mongo.SingleResult {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).FindOne(ctx, filter.Filter, opts...)", collection)
+	g.p("return s.d.Collection(%q).FindOne(ctx, filter.Filter, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.FindOneOptions) *mongo.SingleResult {")
+	g.p("func (s *Svc) FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.FindOneOptions) *mongo.SingleResult {")
 	g.in()
-	g.p("return db.Collection(%q).FindOne(ctx, bson.M{%q: id}, opts...)", collection, "_id")
+	g.p("return s.d.Collection(%q).FindOne(ctx, bson.M{%q: id}, opts...)", collection, "_id")
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func InsertOne(ctx context.Context, document bson.M, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {")
+	g.p("func (s *Svc) InsertOne(ctx context.Context, document bson.M, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {")
 	g.in()
-	g.p("return db.Collection(%q).InsertOne(ctx, document, opts...)", collection)
+	g.p("return s.d.Collection(%q).InsertOne(ctx, document, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func InsertMany(ctx context.Context, documents []interface{}, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {")
+	g.p("func (s *Svc) InsertMany(ctx context.Context, documents []interface{}, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {")
 	g.in()
-	g.p("return db.Collection(%q).InsertMany(ctx, documents, opts...)", collection)
+	g.p("return s.d.Collection(%q).InsertMany(ctx, documents, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func UpdateOne(ctx context.Context, id primitive.ObjectID, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {")
+	g.p("func (s *Svc) UpdateOne(ctx context.Context, id primitive.ObjectID, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {")
 	g.in()
-	g.p("return db.Collection(%q).UpdateOne(ctx, bson.M{%q: id}, update, opts...)", collection, "_id")
+	g.p("return s.d.Collection(%q).UpdateOne(ctx, bson.M{%q: id}, update, opts...)", collection, "_id")
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func UpdateMany(ctx context.Context, filter %s, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {", filterTyp)
+	g.p("func (s *Svc) UpdateMany(ctx context.Context, filter %s, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).UpdateMany(ctx, filter.Filter, update, opts...)", collection)
+	g.p("return s.d.Collection(%q).UpdateMany(ctx, filter.Filter, update, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func DeleteMany(ctx context.Context, filter %s, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {", filterTyp)
+	g.p("func (s *Svc) DeleteMany(ctx context.Context, filter %s, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).DeleteMany(ctx, filter.Filter, opts...)", collection)
+	g.p("return s.d.Collection(%q).DeleteMany(ctx, filter.Filter, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func DeleteWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {")
+	g.p("func (s *Svc) DeleteWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {")
 	g.in()
-	g.p("return db.Collection(%q).DeleteMany(ctx, bson.M{%q: bson.M{%q: ids}}, opts...)", collection, "_id", "$in")
+	g.p("return s.d.Collection(%q).DeleteMany(ctx, bson.M{%q: bson.M{%q: ids}}, opts...)", collection, "_id", "$in")
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func DeleteOne(ctx context.Context, filter %s, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {", filterTyp)
+	g.p("func (s *Svc) DeleteOne(ctx context.Context, filter %s, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).DeleteOne(ctx, filter.Filter, opts...)", collection)
+	g.p("return s.d.Collection(%q).DeleteOne(ctx, filter.Filter, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func DeleteOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {")
+	g.p("func (s *Svc) DeleteOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {")
 	g.in()
-	g.p("return db.Collection(%q).DeleteOne(ctx, bson.M{%q: id}, opts...)", collection, "_id")
+	g.p("return s.d.Collection(%q).DeleteOne(ctx, bson.M{%q: id}, opts...)", collection, "_id")
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func Count(ctx context.Context, filter %s, opts ...*options.CountOptions) (int64, error) {", filterTyp)
+	g.p("func (s *Svc) Count(ctx context.Context, filter %s, opts ...*options.CountOptions) (int64, error) {", filterTyp)
 	g.in()
-	g.p("return db.Collection(%q).CountDocuments(ctx, filter.Filter, opts...)", collection)
+	g.p("return s.d.Collection(%q).CountDocuments(ctx, filter.Filter, opts...)", collection)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("func Aggregate(ctx context.Context, pipeline mongo.Pipeline, opts ...*options.AggregateOptions) (*mongo.Cursor, error) {")
+	g.p("func (s *Svc) Aggregate(ctx context.Context, pipeline mongo.Pipeline, opts ...*options.AggregateOptions) (*mongo.Cursor, error) {")
 	g.in()
-	g.p("return db.Collection(%q).Aggregate(ctx, pipeline, opts...)", collection)
+	g.p("return s.d.Collection(%q).Aggregate(ctx, pipeline, opts...)", collection)
 	g.out()
 	g.p("}")
 }
