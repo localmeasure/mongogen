@@ -33,12 +33,13 @@ func UserWithIDs(ids []primitive.ObjectID) UserFilter {
 }
 
 type useGroupId struct {
+	isSet                   bool
 	groupId                 bson.M
 	name                    bson.M
 }
 
 func UseGroupId() *useGroupId {
-	return &useGroupId{groupId: bson.M{"$eq": 0}}
+	return &useGroupId{}
 }
 
 func (use *useGroupId) Build() UserFilter {
@@ -70,37 +71,41 @@ func (use *useGroupId) WithGroupIdNin(values []primitive.ObjectID) *useGroupId {
 }
 
 func (use *useGroupId) WithGroupIdGt(value primitive.ObjectID) *useGroupId {
-	if use.groupId != nil {
+	if use.isSet {
 		use.groupId["$gt"] = value
 	} else {
 		use.groupId = bson.M{"$gt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useGroupId) WithGroupIdGte(value primitive.ObjectID) *useGroupId {
-	if use.groupId != nil {
+	if use.isSet {
 		use.groupId["$gte"] = value
 	} else {
 		use.groupId = bson.M{"$gte": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useGroupId) WithGroupIdLt(value primitive.ObjectID) *useGroupId {
-	if use.groupId != nil {
+	if use.isSet {
 		use.groupId["$lt"] = value
 	} else {
 		use.groupId = bson.M{"$lt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useGroupId) WithGroupIdLte(value primitive.ObjectID) *useGroupId {
-	if use.groupId != nil {
+	if use.isSet {
 		use.groupId["$lte"] = value
 	} else {
 		use.groupId = bson.M{"$lte": value}
+		use.isSet = true
 	}
 	return use
 }
@@ -126,12 +131,13 @@ func (use *useGroupId) WithNameNin(values []string) *useGroupId {
 }
 
 type useTeamId struct {
+	isSet                   bool
 	teamId                  bson.M
 	lastSeen                bson.M
 }
 
 func UseTeamId() *useTeamId {
-	return &useTeamId{teamId: bson.M{"$eq": 0}}
+	return &useTeamId{}
 }
 
 func (use *useTeamId) Build() UserFilter {
@@ -163,73 +169,81 @@ func (use *useTeamId) WithTeamIdNin(values []primitive.ObjectID) *useTeamId {
 }
 
 func (use *useTeamId) WithTeamIdGt(value primitive.ObjectID) *useTeamId {
-	if use.teamId != nil {
+	if use.isSet {
 		use.teamId["$gt"] = value
 	} else {
 		use.teamId = bson.M{"$gt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithTeamIdGte(value primitive.ObjectID) *useTeamId {
-	if use.teamId != nil {
+	if use.isSet {
 		use.teamId["$gte"] = value
 	} else {
 		use.teamId = bson.M{"$gte": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithTeamIdLt(value primitive.ObjectID) *useTeamId {
-	if use.teamId != nil {
+	if use.isSet {
 		use.teamId["$lt"] = value
 	} else {
 		use.teamId = bson.M{"$lt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithTeamIdLte(value primitive.ObjectID) *useTeamId {
-	if use.teamId != nil {
+	if use.isSet {
 		use.teamId["$lte"] = value
 	} else {
 		use.teamId = bson.M{"$lte": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithLastSeenGt(value time.Time) *useTeamId {
-	if use.lastSeen != nil {
+	if use.isSet {
 		use.lastSeen["$gt"] = value
 	} else {
 		use.lastSeen = bson.M{"$gt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithLastSeenGte(value time.Time) *useTeamId {
-	if use.lastSeen != nil {
+	if use.isSet {
 		use.lastSeen["$gte"] = value
 	} else {
 		use.lastSeen = bson.M{"$gte": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithLastSeenLt(value time.Time) *useTeamId {
-	if use.lastSeen != nil {
+	if use.isSet {
 		use.lastSeen["$lt"] = value
 	} else {
 		use.lastSeen = bson.M{"$lt": value}
+		use.isSet = true
 	}
 	return use
 }
 
 func (use *useTeamId) WithLastSeenLte(value time.Time) *useTeamId {
-	if use.lastSeen != nil {
+	if use.isSet {
 		use.lastSeen["$lte"] = value
 	} else {
 		use.lastSeen = bson.M{"$lte": value}
+		use.isSet = true
 	}
 	return use
 }
