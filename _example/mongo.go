@@ -4,33 +4,10 @@
 package users
 
 import (
-	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
-
-func New(d *mongo.Database) *Svc {
-	return &Svc{d: d}
-}
-
-type Svc struct {
-	d *mongo.Database
-}
-
-type UserFilter struct {
-	Filter bson.D
-}
-
-func UserWithID(id primitive.ObjectID) UserFilter {
-	return UserFilter{bson.D{{Key: "_id", Value: id}}}
-}
-
-func UserWithIDs(ids []primitive.ObjectID) UserFilter {
-	return UserFilter{bson.D{{Key: "_id", Value: bson.M{"$in": ids}}}}
-}
 
 type useGroupId struct {
 	isSet                   bool
@@ -42,35 +19,35 @@ func UseGroupId() *useGroupId {
 	return &useGroupId{}
 }
 
-func (use *useGroupId) Build() UserFilter {
+func (use *useGroupId) Build() bson.D {
 	filter := bson.D{primitive.E{Key: "group_id", Value: use.groupId}}
 	if use.name != nil {
 		filter = append(filter, primitive.E{Key: "name", Value: use.name})
 	}
-	return UserFilter{filter}
+	return filter
 }
 
-func (use *useGroupId) WithGroupId(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupId(value primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useGroupId) WithGroupIdNe(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdNe(value primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useGroupId) WithGroupIdIn(values []primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdIn(values []primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$in": values}
 	return use
 }
 
-func (use *useGroupId) WithGroupIdNin(values []primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdNin(values []primitive.ObjectID) *useGroupId {
 	use.groupId = bson.M{"$nin": values}
 	return use
 }
 
-func (use *useGroupId) WithGroupIdGt(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdGt(value primitive.ObjectID) *useGroupId {
 	if use.isSet {
 		use.groupId["$gt"] = value
 	} else {
@@ -80,7 +57,7 @@ func (use *useGroupId) WithGroupIdGt(value primitive.ObjectID) *useGroupId {
 	return use
 }
 
-func (use *useGroupId) WithGroupIdGte(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdGte(value primitive.ObjectID) *useGroupId {
 	if use.isSet {
 		use.groupId["$gte"] = value
 	} else {
@@ -90,7 +67,7 @@ func (use *useGroupId) WithGroupIdGte(value primitive.ObjectID) *useGroupId {
 	return use
 }
 
-func (use *useGroupId) WithGroupIdLt(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdLt(value primitive.ObjectID) *useGroupId {
 	if use.isSet {
 		use.groupId["$lt"] = value
 	} else {
@@ -100,7 +77,7 @@ func (use *useGroupId) WithGroupIdLt(value primitive.ObjectID) *useGroupId {
 	return use
 }
 
-func (use *useGroupId) WithGroupIdLte(value primitive.ObjectID) *useGroupId {
+func (use *useGroupId) GroupIdLte(value primitive.ObjectID) *useGroupId {
 	if use.isSet {
 		use.groupId["$lte"] = value
 	} else {
@@ -110,22 +87,22 @@ func (use *useGroupId) WithGroupIdLte(value primitive.ObjectID) *useGroupId {
 	return use
 }
 
-func (use *useGroupId) WithName(value string) *useGroupId {
+func (use *useGroupId) Name(value string) *useGroupId {
 	use.name = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useGroupId) WithNameNe(value string) *useGroupId {
+func (use *useGroupId) NameNe(value string) *useGroupId {
 	use.name = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useGroupId) WithNameIn(values []string) *useGroupId {
+func (use *useGroupId) NameIn(values []string) *useGroupId {
 	use.name = bson.M{"$in": values}
 	return use
 }
 
-func (use *useGroupId) WithNameNin(values []string) *useGroupId {
+func (use *useGroupId) NameNin(values []string) *useGroupId {
 	use.name = bson.M{"$nin": values}
 	return use
 }
@@ -140,35 +117,35 @@ func UseTeamId() *useTeamId {
 	return &useTeamId{}
 }
 
-func (use *useTeamId) Build() UserFilter {
+func (use *useTeamId) Build() bson.D {
 	filter := bson.D{primitive.E{Key: "team_id", Value: use.teamId}}
 	if use.lastSeen != nil {
 		filter = append(filter, primitive.E{Key: "last_seen", Value: use.lastSeen})
 	}
-	return UserFilter{filter}
+	return filter
 }
 
-func (use *useTeamId) WithTeamId(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamId(value primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$eq": value}
 	return use
 }
 
-func (use *useTeamId) WithTeamIdNe(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdNe(value primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$ne": value}
 	return use
 }
 
-func (use *useTeamId) WithTeamIdIn(values []primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdIn(values []primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$in": values}
 	return use
 }
 
-func (use *useTeamId) WithTeamIdNin(values []primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdNin(values []primitive.ObjectID) *useTeamId {
 	use.teamId = bson.M{"$nin": values}
 	return use
 }
 
-func (use *useTeamId) WithTeamIdGt(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdGt(value primitive.ObjectID) *useTeamId {
 	if use.isSet {
 		use.teamId["$gt"] = value
 	} else {
@@ -178,7 +155,7 @@ func (use *useTeamId) WithTeamIdGt(value primitive.ObjectID) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithTeamIdGte(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdGte(value primitive.ObjectID) *useTeamId {
 	if use.isSet {
 		use.teamId["$gte"] = value
 	} else {
@@ -188,7 +165,7 @@ func (use *useTeamId) WithTeamIdGte(value primitive.ObjectID) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithTeamIdLt(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdLt(value primitive.ObjectID) *useTeamId {
 	if use.isSet {
 		use.teamId["$lt"] = value
 	} else {
@@ -198,7 +175,7 @@ func (use *useTeamId) WithTeamIdLt(value primitive.ObjectID) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithTeamIdLte(value primitive.ObjectID) *useTeamId {
+func (use *useTeamId) TeamIdLte(value primitive.ObjectID) *useTeamId {
 	if use.isSet {
 		use.teamId["$lte"] = value
 	} else {
@@ -208,7 +185,7 @@ func (use *useTeamId) WithTeamIdLte(value primitive.ObjectID) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithLastSeenGt(value time.Time) *useTeamId {
+func (use *useTeamId) LastSeenGt(value time.Time) *useTeamId {
 	if use.isSet {
 		use.lastSeen["$gt"] = value
 	} else {
@@ -218,7 +195,7 @@ func (use *useTeamId) WithLastSeenGt(value time.Time) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithLastSeenGte(value time.Time) *useTeamId {
+func (use *useTeamId) LastSeenGte(value time.Time) *useTeamId {
 	if use.isSet {
 		use.lastSeen["$gte"] = value
 	} else {
@@ -228,7 +205,7 @@ func (use *useTeamId) WithLastSeenGte(value time.Time) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithLastSeenLt(value time.Time) *useTeamId {
+func (use *useTeamId) LastSeenLt(value time.Time) *useTeamId {
 	if use.isSet {
 		use.lastSeen["$lt"] = value
 	} else {
@@ -238,7 +215,7 @@ func (use *useTeamId) WithLastSeenLt(value time.Time) *useTeamId {
 	return use
 }
 
-func (use *useTeamId) WithLastSeenLte(value time.Time) *useTeamId {
+func (use *useTeamId) LastSeenLte(value time.Time) *useTeamId {
 	if use.isSet {
 		use.lastSeen["$lte"] = value
 	} else {
@@ -248,58 +225,3 @@ func (use *useTeamId) WithLastSeenLte(value time.Time) *useTeamId {
 	return use
 }
 
-func (s *Svc) Find(ctx context.Context, filter UserFilter, opts ...*options.FindOptions) (*mongo.Cursor, error) {
-	return s.d.Collection("users").Find(ctx, filter.Filter, opts...)
-}
-
-func (s *Svc) FindWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.FindOptions) (*mongo.Cursor, error) {
-	return s.d.Collection("users").Find(ctx, bson.M{"_id": bson.M{"$in": ids}}, opts...)
-}
-
-func (s *Svc) FindOne(ctx context.Context, filter UserFilter, opts ...*options.FindOneOptions) *mongo.SingleResult {
-	return s.d.Collection("users").FindOne(ctx, filter.Filter, opts...)
-}
-
-func (s *Svc) FindOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.FindOneOptions) *mongo.SingleResult {
-	return s.d.Collection("users").FindOne(ctx, bson.M{"_id": id}, opts...)
-}
-
-func (s *Svc) InsertOne(ctx context.Context, document bson.M, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
-	return s.d.Collection("users").InsertOne(ctx, document, opts...)
-}
-
-func (s *Svc) InsertMany(ctx context.Context, documents []interface{}, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {
-	return s.d.Collection("users").InsertMany(ctx, documents, opts...)
-}
-
-func (s *Svc) UpdateOne(ctx context.Context, id primitive.ObjectID, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
-	return s.d.Collection("users").UpdateOne(ctx, bson.M{"_id": id}, update, opts...)
-}
-
-func (s *Svc) UpdateMany(ctx context.Context, filter UserFilter, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
-	return s.d.Collection("users").UpdateMany(ctx, filter.Filter, update, opts...)
-}
-
-func (s *Svc) DeleteMany(ctx context.Context, filter UserFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
-	return s.d.Collection("users").DeleteMany(ctx, filter.Filter, opts...)
-}
-
-func (s *Svc) DeleteWithIDs(ctx context.Context, ids []primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
-	return s.d.Collection("users").DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}}, opts...)
-}
-
-func (s *Svc) DeleteOne(ctx context.Context, filter UserFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
-	return s.d.Collection("users").DeleteOne(ctx, filter.Filter, opts...)
-}
-
-func (s *Svc) DeleteOneWithID(ctx context.Context, id primitive.ObjectID, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
-	return s.d.Collection("users").DeleteOne(ctx, bson.M{"_id": id}, opts...)
-}
-
-func (s *Svc) Count(ctx context.Context, filter UserFilter, opts ...*options.CountOptions) (int64, error) {
-	return s.d.Collection("users").CountDocuments(ctx, filter.Filter, opts...)
-}
-
-func (s *Svc) Aggregate(ctx context.Context, pipeline mongo.Pipeline, opts ...*options.AggregateOptions) (*mongo.Cursor, error) {
-	return s.d.Collection("users").Aggregate(ctx, pipeline, opts...)
-}

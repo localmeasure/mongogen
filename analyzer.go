@@ -86,18 +86,12 @@ type (
 func analyze(parsed []string, prefix string) pkg {
 	pkg := pkg{
 		imports: []string{
-			"context",
 			"go.mongodb.org/mongo-driver/bson",
 			"go.mongodb.org/mongo-driver/bson/primitive",
-			"go.mongodb.org/mongo-driver/mongo",
-			"go.mongodb.org/mongo-driver/mongo/options",
 		},
 		imported: map[string]struct{}{
-			"context":                          struct{}{},
-			"go.mongodb.org/mongo-driver/bson": struct{}{},
+			"go.mongodb.org/mongo-driver/bson":           struct{}{},
 			"go.mongodb.org/mongo-driver/bson/primitive": struct{}{},
-			"go.mongodb.org/mongo-driver/mongo":          struct{}{},
-			"go.mongodb.org/mongo-driver/mongo/options":  struct{}{},
 		},
 	}
 	var indexes []index
