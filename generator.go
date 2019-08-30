@@ -73,9 +73,9 @@ func (g *Generator) Gen(pkgName string, collection string, indexes []string) {
 func printIdxTyp(g *Generator, idx index) {
 	g.p("type %s struct {", idx.name)
 	g.in()
-	g.p("%-24sbool", "isSet")
+	g.p("%s bool", "isSet")
 	for _, k := range idx.keys {
-		g.p("%-24sbson.M", k.goname)
+		g.p("%s bson.M", k.goname)
 	}
 	g.out()
 	g.p("}")
